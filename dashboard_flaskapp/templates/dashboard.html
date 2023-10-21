@@ -1,0 +1,21 @@
+<h1>Device Data</h1>
+<table border="1">
+    <thead>
+        <tr>
+            <th>Device ID</th>
+            <th>Is USB Powered</th>
+            <th>Battery Level</th>
+            <th>Last Updated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.device_id }}</td>
+            <td>{{ row.is_usb_powered }}</td>
+            <td>{{ row.battery_level }}</td>
+            <td>{{ row.latest_timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

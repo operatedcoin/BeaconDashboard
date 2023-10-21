@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        .beacon-status {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beacon Dashboard</title>
+    <script src="/socket.io/socket.io.js"></script>
+    
+</head>
+<body>
+    <div id="dashboard">
+        <h1>Beacon Dashboard</h1>
+    
+        <div class="beacon-status" id="beacon1">
+            <h2>Beacon 1</h2>
+            <p>Awaiting update...</p>
+        </div>
+    
+        <div class="beacon-status" id="beacon2">
+            <h2>Beacon 2</h2>
+            <p>Awaiting update...</p>
+        </div>
+
+        <div class="beacon-status" id="beacon3">
+            <h2>Beacon 2</h2>
+            <p>Awaiting update...</p>
+        </div>
+
+        <div class="beacon-status" id="beacon4">
+            <h2>Beacon 2</h2>
+            <p>Awaiting update...</p>
+        </div>
+
+        <div class="beacon-status" id="beacon5">
+            <h2>Beacon 2</h2>
+            <p>Awaiting update...</p>
+        </div>
+
+        <div class="beacon-status" id="beacon6">
+            <h2>Beacon 2</h2>
+            <p>Awaiting update...</p>
+        </div>
+
+        <div class="beacon-status" id="beacon7">
+            <h2>Beacon 2</h2>
+            <p>Awaiting update...</p>
+        </div>
+
+        <div class="beacon-status" id="beacon8">
+            <h2>Beacon 2</h2>
+            <p>Awaiting update...</p>
+        </div>
+
+        <div class="beacon-status" id="beacon9">
+            <h2>Beacon 2</h2>
+            <p>Awaiting update...</p>
+        </div>
+
+        <div class="beacon-status" id="beacon10">
+            <h2>Beacon 2</h2>
+            <p>Awaiting update...</p>
+        </div>
+    
+        <!-- Repeat above structure for all the beacons up to Beacon 10 -->
+    
+    </div>
+    
+
+    <script>
+        const socket = io();
+    
+        socket.on('beaconStatuses', function(statuses) {
+            for (let i = 1; i <= 10; i++) {
+                let beaconElement = document.getElementById("beacon" + i).querySelector('p');
+                beaconElement.textContent = statuses["beacon" + i];
+            }
+        });
+    </script>
+</body>
+</html>
