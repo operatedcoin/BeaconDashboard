@@ -32,22 +32,25 @@ def get_secret():
 
 # Database configuration
 secrets = get_secret()
+app.config['MYSQL_HOST'] = secrets['MYSQL_HOST']
+app.config['MYSQL_USER'] = secrets['MYSQL_USER']
+app.config['MYSQL_PASSWORD'] = secrets['MYSQL_PASSWORD']
+app.config['MYSQL_DB'] = secrets['MYSQL_DB']
 
-app.config['MYSQL_HOST'] = secrets.get('MYSQL_HOST')
-app.config['MYSQL_USER'] = secrets.get('MYSQL_USER')
-app.config['MYSQL_PASSWORD'] = secrets.get('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = secrets.get('MYSQL_DB')
 
-try:
-    mysql = pymysql.connect(
-        host=app.config['MYSQL_HOST'],
-        user=app.config['MYSQL_USER'],
-        password=app.config['MYSQL_PASSWORD'],
-        db=app.config['MYSQL_DB']
-    )
-except pymysql.MySQLError as e:
-    logger.error(f"Error connecting to database: {e}")
-    raise
+def get_db_connection():
+    try:
+        connection = pymysql.connect(
+            host=app.config['MYSQL_HOST'],
+            user=app.config['MYSQL_USER'],
+            password=app.config['MYSQL_PASSWORD'],
+            db=app.config['MYSQL_DB']
+        )
+        return connection
+    except pymysql.MySQLError as e:
+        logger.error(f"Error connecting to database: {e}")
+        raise
+
 
 @app.route('/')
 def home():
@@ -55,55 +58,29 @@ def home():
 
 @app.route('/ingest', methods=['GET', 'POST'])
 def ingest_data():
-    if request.method == 'POST':
-        try:
-            data = request.json
+    connection = get_db_connection()
+    try:
+        # existing code...
+        cur = connection.cursor()
+        # existing code...
+        connection.commit()
+    except pymysql.MySQLError as e:
+        logger.error(f"Database error: {e}")
+        return jsonify(success=False, message="Internal server error"), 500
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return jsonify(success=False, message="Internal server error"), 500
+    finally:
+        connection.close()
 
-            device_id = data.get('device_id')
-            is_usb_powered = data.get('is_usb_powered')
-            battery_level = data.get('battery_level')
-
-            # Validation code starts here
-            if not isinstance(device_id, int):
-                return jsonify(success=False, message="Invalid device_id"), 400
-            if is_usb_powered not in [0, 1]:
-                return jsonify(success=False, message="Invalid is_usb_powered value"), 400
-
-            cur = mysql.cursor()
-            query = """
-            INSERT INTO device_data(device_id, is_usb_powered, battery_level) 
-            VALUES(%s, %s, %s)
-            """
-            cur.execute(query, (device_id, is_usb_powered, battery_level))
-            mysql.commit()
-        except pymysql.MySQLError as e:
-            logger.error(f"Database error: {e}")
-            return jsonify(success=False, message="Internal server error"), 500
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            return jsonify(success=False, message="Internal server error"), 500
-        else:
-            return jsonify(success=True, message="Data inserted successfully."), 200
-    else:
-        return "This is the ingest endpoint. Use a POST request to send data."
+    return jsonify(success=True, message="Data inserted successfully."), 200
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
+    connection = get_db_connection()
     try:
-        cur = mysql.cursor(pymysql.cursors.DictCursor)
-        cur.execute("""
-            SELECT d.device_id, 
-                d.is_usb_powered, 
-                d.battery_level, 
-                d.timestamp AS latest_timestamp
-            FROM device_data d
-            INNER JOIN (
-            SELECT device_id, MAX(timestamp) AS max_timestamp
-            FROM device_data
-            GROUP BY device_id
-            ) subq ON d.device_id = subq.device_id AND d.timestamp = subq.max_timestamp
-            ORDER BY latest_timestamp DESC
-        """)
+        cur = connection.cursor(pymysql.cursors.DictCursor)
+        # existing code...
         rows = cur.fetchall()
     except pymysql.MySQLError as e:
         logger.error(f"Database error: {e}")
@@ -111,8 +88,11 @@ def dashboard():
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return "Internal server error", 500
-    else:
-        return render_template('dashboard.html', rows=rows)
+    finally:
+        connection.close()
+
+    return render_template('dashboard.html', rows=rows)
+
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
